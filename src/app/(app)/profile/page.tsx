@@ -7,12 +7,10 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import axios from "axios";
 import { useToast } from "@/hooks/use-toast";
-import { useRouter } from "next/navigation";
 
 const UserProfile = () => {
     const { data: session } = useSession();
     const { toast } = useToast();
-    const router = useRouter();
 
     const [accountType, setAccountType] = useState("client");
 

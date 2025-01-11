@@ -135,13 +135,24 @@ const Page = () => {
             });
             setBidText("");
 
-        } catch (error) {
-            console.error("Error submitting bid:", error);
-            toast({
-                title: "Error",
-                description: error.response?.data?.message || "Failed to submit bid.",
-                variant: "destructive",
-            });
+        } catch (error: unknown) {
+            if (axios.isAxiosError(error)) {
+                // Handle AxiosError specifically
+                console.error("Axios Error submitting bid:", error);
+                toast({
+                    title: "Error",
+                    description: error.response?.data?.message || "Failed to submit bid.",
+                    variant: "destructive",
+                });
+            } else {
+                // Handle other unknown errors
+                console.error("Unknown Error submitting bid:", error);
+                toast({
+                    title: "Error",
+                    description: "An unexpected error occurred.",
+                    variant: "destructive",
+                });
+            }
         } finally {
             setBidSubmitting(false);
         }

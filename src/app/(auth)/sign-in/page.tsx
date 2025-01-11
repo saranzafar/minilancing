@@ -165,7 +165,7 @@ function Page() {
 
                 <div className="mt-6 text-center">
                     <p className="text-sm text-gray-600">
-                        Don't have an account?{" "}
+                        Don`&#39;`t have an account?{" "}
                         <Link href="/signup" className="font-semibold text-teal-600 hover:text-teal-500">
                             Create Account
                         </Link>

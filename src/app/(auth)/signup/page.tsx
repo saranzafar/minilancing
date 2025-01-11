@@ -4,8 +4,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 import Link from "next/link";
-import { useEffect, useState } from "react";
-import { useDebounceCallback } from "usehooks-ts";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { signUpSchema } from "@/schemas/signupSchema";
@@ -16,18 +14,13 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useState } from "react";
 
 function Page() {
-    const [username, setUsername] = useState("");
-    const [usernameMessage, setUsernameMessage] = useState("");
-    const [isCheckingUsername, setIsCheckingUsername] = useState(false);
-    const [isSubmitting, setIsSubmitting] = useState(false);
-
-    const debounced = useDebounceCallback((value: string) => setUsername(value), 300);
     const { toast } = useToast();
     const router = useRouter();
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
-    // zod implementation
     const form = useForm<z.infer<typeof signUpSchema>>({
         resolver: zodResolver(signUpSchema),
         defaultValues: {
@@ -38,43 +31,38 @@ function Page() {
         },
     });
 
-
-    useEffect(() => {
-        const checkUsernameUniqueness = async () => {
-            if (username) {
-                setIsCheckingUsername(true);
-                setUsernameMessage("");
-                try {
-                    const response = await axios.get(`/api/check-username-unique/?username=${username}`);
-                    setUsernameMessage(response.data.message);
-                } catch (error) {
-                    const axiosError = error as AxiosError<ApiResponse>;
-                    setUsernameMessage(axiosError.response?.data.message ?? "Error checking username");
-                } finally {
-                    setIsCheckingUsername(false);
-                }
-            }
-        };
-        checkUsernameUniqueness();
-    }, [username]);
-
     const onSubmit = async (data: z.infer<typeof signUpSchema>) => {
         setIsSubmitting(true);
+
         try {
-            const response = await axios.post("/api/sign-up", data);
+            // Check if the username is unique
+            const usernameCheckResponse = await axios.get(`/api/check-username-unique`, {
+                params: { username: data.username },
+            });
+
+            if (!usernameCheckResponse.data.success) {
+                toast({
+                    title: "Username Error",
+                    description: usernameCheckResponse.data.message,
+                    variant: "destructive",
+                });
+                return;
+            }
+
+            // If the username is unique, proceed with signup
+            const signUpResponse = await axios.post("/api/sign-up", data);
+
             toast({
                 title: "Sign up successful",
-                description: response.data.message,
+                description: signUpResponse.data.message,
             });
 
             router.replace(`/verify/${data.username}`);
         } catch (error) {
-            console.error("Error signing up user: ", error);
             const axiosError = error as AxiosError<ApiResponse>;
-            const errorMessage = axiosError.response?.data.message;
             toast({
                 title: "Error signing up",
-                description: errorMessage ?? "Error signing up",
+                description: axiosError.response?.data.message || "Error signing up",
                 variant: "destructive",
             });
         } finally {
@@ -87,9 +75,7 @@ function Page() {
             <div className="max-w-md w-full bg-white p-10 rounded-lg shadow-2xl border border-gray-200">
                 <div className="text-center mb-4">
                     <h2 className="text-4xl font-bold text-gray-800">Create Your Account</h2>
-                    <p className="mt-2 text-sm text-gray-500">
-                        Join us and start your journey.
-                    </p>
+                    <p className="mt-2 text-sm text-gray-500">Join us and start your journey.</p>
                 </div>
 
                 <Form {...form}>
@@ -105,20 +91,8 @@ function Page() {
                                             placeholder="Choose a username"
                                             className="border-gray-300 focus:border-teal-500 focus:ring-teal-500 rounded-md"
                                             {...field}
-                                            onChange={(e) => {
-                                                field.onChange(e);
-                                                debounced(e.target.value);
-                                            }}
                                         />
                                     </FormControl>
-                                    {isCheckingUsername && (
-                                        <Loader2 className="animate-spin text-teal-500 inline-block ml-2" />
-                                    )}
-                                    <p
-                                        className={`text-sm mt-1 ${usernameMessage === "username is unique" ? "text-green-500" : "text-red-500"}`}
-                                    >
-                                        {usernameMessage}
-                                    </p>
                                     <FormMessage />
                                 </FormItem>
                             )}
@@ -159,7 +133,6 @@ function Page() {
                                 </FormItem>
                             )}
                         />
-                        {/* Dropdown for User Type */}
                         <FormField
                             control={form.control}
                             name="userType"

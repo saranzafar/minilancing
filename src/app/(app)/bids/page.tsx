@@ -24,7 +24,7 @@ interface Project {
   }[];
 }
 
-export default function UserBiddedProjects({ title }) {
+export default function UserBiddedProjects() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [filteredProjects, setFilteredProjects] = useState<Project[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -51,19 +51,31 @@ export default function UserBiddedProjects({ title }) {
         description: "Projects fetched successfully",
         variant: "default",
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       setIsError(true);
-      const errorMsg = error.response?.data?.message || "An unexpected error occurred.";
-      setErrorMessage(errorMsg);
-      toast({
-        title: "Error",
-        description: errorMsg,
-        variant: "destructive",
-      });
 
-      // Retry option for network errors
-      if (!retry && error.message === "Network Error") {
-        setTimeout(() => fetchUserBiddedProjects(true), 3000);
+      // Check if the error is an AxiosError
+      if (axios.isAxiosError(error)) {
+        const errorMsg = error.response?.data?.message || "An unexpected error occurred.";
+        setErrorMessage(errorMsg);
+        toast({
+          title: "Error",
+          description: errorMsg,
+          variant: "destructive",
+        });
+
+        // Retry option for network errors
+        if (!retry && error.message === "Network Error") {
+          setTimeout(() => fetchUserBiddedProjects(true), 3000);
+        }
+      } else {
+        // Handle non-Axios errors (fallback)
+        setErrorMessage("An unexpected error occurred.");
+        toast({
+          title: "Error",
+          description: "An unexpected error occurred.",
+          variant: "destructive",
+        });
       }
     } finally {
       setIsLoading(false);
@@ -81,7 +93,7 @@ export default function UserBiddedProjects({ title }) {
 
     if (searchTerm) {
       filtered = filtered.filter((project) =>
-        project.title.toLowerCase().includes(searchTerm.toLowerCase()) 
+        project.title.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
 
@@ -98,7 +110,7 @@ export default function UserBiddedProjects({ title }) {
   return (
     <div className="min-h-screen flex flex-col items-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-6xl mx-auto w-full">
-        <h2 className="text-3xl font-bold text-gray-800 mb-6">{title ? title : "Your Bidded Projects"}</h2>
+        <h2 className="text-3xl font-bold text-gray-800 mb-6">Your Bidded Projects</h2>
 
         {/* Filters Section */}
         <div className="mb-6 flex space-x-4 items-end">
@@ -166,7 +178,7 @@ export default function UserBiddedProjects({ title }) {
                       <h3 className="text-gray-700 font-semibold mb-2">Your Bid</h3>
                       <div className="text-gray-700 bg-gray-100 p-3 rounded-md">
                         <p className="font-semibold">{project.bids[0].username}</p>
-                        <p className="text-gray-600 italic">"{project.bids[0].bid}"</p>
+                        <p className="text-gray-600 italic">{project.bids[0].bid}</p>
                         <p className="text-xs text-gray-500 mt-1">
                           Bid submitted on: {new Date(project.bids[0].createdAt).toLocaleDateString()}
                         </p>

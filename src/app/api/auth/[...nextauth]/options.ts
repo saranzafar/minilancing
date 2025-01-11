@@ -7,6 +7,14 @@ import GitHubProvider from "next-auth/providers/github";
 import LinkedInProvider from "next-auth/providers/linkedin";
 import GoogleProvider from "next-auth/providers/google";
 
+interface User {
+    id: string; // Changed from `_id` to `id` to match NextAuth's expectation
+    isVerified: boolean;
+    username: string;
+    userType: string;
+    password: string; // Used internally, excluded from JWT and session
+}
+
 export const authOptions: NextAuthOptions = {
     providers: [
         CredentialsProvider({
@@ -16,14 +24,20 @@ export const authOptions: NextAuthOptions = {
                 identifier: { label: 'Email or Username', type: 'text' },
                 password: { label: 'Password', type: 'password' },
             },
-            async authorize(credentials: any): Promise<any> {
+            async authorize(credentials): Promise<Omit<User, "password"> | null> {
+                if (!credentials) {
+                    throw new Error("Missing credentials");
+                }
+
+                const { identifier, password } = credentials;
+
                 await dbConnect();
 
                 try {
                     const user = await UserModel.findOne({
                         $or: [
-                            { email: credentials.identifier },
-                            { username: credentials.identifier },
+                            { email: identifier },
+                            { username: identifier },
                         ]
                     });
 
@@ -37,20 +51,25 @@ export const authOptions: NextAuthOptions = {
 
                     // Check if the provided password matches the hashed password in the database
                     const isPasswordCorrect = await bcrypt.compare(
-                        credentials.password,
+                        password,
                         user.password
                     );
 
                     if (isPasswordCorrect) {
-                        return user;
+                        // Exclude password from the returned user object
+                        return {
+                            id: user._id.toString(),
+                            isVerified: user.isVerified,
+                            username: user.username,
+                            userType: user.userType,
+                        };
                     } else {
                         throw new Error('Incorrect password');
                     }
-
-                } catch (err: any) {
-                    throw new Error(err.message);
+                } catch (err) {
+                    throw new Error((err as Error).message);
                 }
-            }
+            },
         }),
         GitHubProvider({
             clientId: process.env.GITHUB_ID!,

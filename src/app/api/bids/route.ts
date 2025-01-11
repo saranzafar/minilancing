@@ -2,7 +2,7 @@ import dbConnect from "@/lib/dbConnect";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../auth/[...nextauth]/options";
 import { User } from "next-auth";
-import { ProjectModel } from "@/model/User";
+import { Project, ProjectModel } from "@/model/User";
 import { NextResponse } from "next/server";
 
 export async function POST(request: Request) {
@@ -37,7 +37,10 @@ export async function POST(request: Request) {
         }
 
         // Check if the user already posted a bid for this project
-        const userHasBid = project.bids.some(b => b?.userId?.toString() === _user._id);
+        // const userHasBid = project.bids.some(b => b?.userId?.toString() === _user._id);
+        const userHasBid = project.bids.some((b: Project['bids'][number]) => b?.userId?.toString() === _user._id);
+
+        
         if (userHasBid) {
             return new Response(
                 JSON.stringify({ success: false, message: 'You have already placed a bid for this project' }),

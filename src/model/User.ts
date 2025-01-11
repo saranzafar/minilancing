@@ -20,9 +20,18 @@ const ProjectSchema: Schema<Project> = new mongoose.Schema({
     details: { type: String, required: true },
     amount: { type: String, required: true },
     createdAt: { type: Date, default: Date.now },
-    userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
-    bids: []
-}, { timestamps: true });
+    userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
+    bids: [
+        {
+            bid: { type: String, required: true },
+            userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
+            username: { type: String, required: true },
+            createdAt: { type: Date, default: Date.now },
+        },
+    ],
+},
+    { timestamps: true });
+
 
 // Bid Schema
 export interface Bid extends Document {

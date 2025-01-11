@@ -55,12 +55,12 @@ function Client() {
 
     const handleGenerateDescription = async () => {
         setIsGenerating(true);
-        const title = form.getValues("title");
+        const title = form.getValues("title") || "";
 
         try {
             const result = await generateDescription(title);
             if (result.success) {
-                form.setValue("details", result.description);
+                form.setValue("details", result.description || "");
                 toast({ title: "Description generated successfully!" });
             } else {
                 toast({ title: "Error", description: result.message, variant: "destructive" });
@@ -71,6 +71,7 @@ function Client() {
             setIsGenerating(false);
         }
     };
+
 
     return (
         <div className="min-h-screen flex items-center py-12 px-4 sm:px-6 lg:px-8">
@@ -119,7 +120,7 @@ function Client() {
                                     <FormLabel className="text-gray-700">Details</FormLabel>
                                     <FormControl>
                                         {isGenerating ? (
-                                            <Skeleton className="h-24 w-full rounded-md" />
+                                            <Skeleton />
                                         ) : (
                                             <Textarea
                                                 placeholder="Enter project details"

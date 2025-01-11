@@ -1,46 +1,43 @@
-"use client"
+"use client";
 
-import React, { useEffect, useState } from 'react'
-import Client from "@/components/dashboard/client"
-import axios from 'axios';
-import { useToast } from '@/hooks/use-toast';
-import ViewProjects from '../projects/page';
+import React, { useEffect, useState } from "react";
+import Client from "@/components/dashboard/client";
+import axios from "axios";
+import { useToast } from "@/hooks/use-toast";
+import ViewProjects from "@/components/project/ViewProject"; // Corrected path
 
 function Page() {
-    const title = "Recently Uploaded Projects"
-
-    const [accountType, setAccountType] = useState(null)
-    const { toast } = useToast()
-
-    const fetchUserType = async () => {
-        try {
-            const response = await axios.get("/api/profile");
-            if (response.status === 200) {
-                setAccountType(response.data.userType);
-            }
-        } catch (error) {
-            console.error("Error fetching user type:", error);
-            toast({
-                title: "Success",
-                description: "Error while fetching user type",
-                variant: "default",
-            });
-        }
-    };
+    const [accountType, setAccountType] = useState<string | null>(null);
+    const { toast } = useToast();
 
     useEffect(() => {
+        async function fetchUserType() {
+            try {
+                const response = await axios.get("/api/profile");
+                if (response.status === 200) {
+                    setAccountType(response.data.userType);
+                }
+            } catch (error) {
+                toast({
+                    title: "Error",
+                    description: "Error fetching user type.",
+                    variant: "destructive",
+                });
+            }
+        }
+
         fetchUserType();
-    }, []);
+    }, [toast]);
 
     return (
         <div>
             {accountType === "client" ? (
                 <Client />
             ) : (
-                <ViewProjects title={title} primaryBtn />
+                <ViewProjects title="Recently Uploaded Projects" primaryBtn={true} />
             )}
         </div>
-    )
+    );
 }
 
-export default Page
+export default Page;
